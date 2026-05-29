@@ -124,7 +124,7 @@ namespace bitui
 
     auto ScreenBuffer::getSize() const -> const Size& { return m_size; }
 
-    auto ScreenBuffer::getBounds() const -> const Rect& { return Rect{ .x = 0, .y = 0, .size = m_size }; }
+    auto ScreenBuffer::getBounds() const -> const Rect& { return m_bounds; }
 
     auto ScreenBuffer::index(uint16_t x, uint16_t y) const -> size_t
     {
