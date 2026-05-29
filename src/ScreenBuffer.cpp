@@ -23,7 +23,7 @@ namespace bitui
             return;
         }
 
-        auto& cell = m_cells[index(x, y)];
+        auto& cell = grid()[y, x];
         cell.grapheme.assign(glyph);
         cell.style = style;
     }
@@ -49,7 +49,7 @@ namespace bitui
                 break;
             }
             if (!line_saturated && x < m_size.width) {
-                auto& cell{ m_cells[index(x, y)] };
+                auto& cell{ grid()[y, x] };
                 cell.grapheme.assign(text.substr(i, glyph_len));
                 cell.style = style;
             }
@@ -70,7 +70,7 @@ namespace bitui
             return;
         }
         for (auto yy{ clipped.y }; yy < clipped.bottom(); ++yy) {
-            auto* row{ &m_cells[index(clipped.x, yy)] };
+            auto* row{ &grid()[yy, clipped.x] };
             for (auto xx{ clipped.x }; xx < clipped.right(); ++xx) {
                 row->grapheme = std::string(glyph);
                 row->style = style;
@@ -112,22 +112,5 @@ namespace bitui
         put(right, top, glyphs.top_right, style);
         put(left, bottom, glyphs.bottom_left, style);
         put(right, bottom, glyphs.bottom_right, style);
-    }
-
-    auto ScreenBuffer::at(uint16_t x, uint16_t y) const -> const Cell&
-    {
-        if (!m_bounds.contains(x, y)) {
-            throw std::out_of_range("ScreenBuffer::at coordinates out of range");
-        }
-        return m_cells[index(x, y)];
-    }
-
-    auto ScreenBuffer::getSize() const -> const Size& { return m_size; }
-
-    auto ScreenBuffer::getBounds() const -> const Rect& { return m_bounds; }
-
-    auto ScreenBuffer::index(uint16_t x, uint16_t y) const -> size_t
-    {
-        return (static_cast<size_t>(y) * static_cast<size_t>(m_size.width)) + static_cast<size_t>(x);
     }
 }

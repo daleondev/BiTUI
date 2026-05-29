@@ -90,5 +90,7 @@ namespace bitui
         bool dim{};
         bool italic{};
         bool underline{};
+
+        constexpr auto operator<=>(const Style&) const = default;
     };
 }

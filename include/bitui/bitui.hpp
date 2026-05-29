@@ -3,6 +3,7 @@
 #include "Color.hpp"
 #include "ScreenBuffer.hpp"
 #include "Style.hpp"
+#include "ansi.hpp"
 #include "geometry.hpp"
 
 #if defined(_WIN32) || defined(_WIN64)

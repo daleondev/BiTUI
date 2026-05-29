@@ -18,6 +18,7 @@ target_sources(
     PRIVATE
     src/main.cpp
     src/ScreenBuffer.cpp
+    src/ansi.cpp
 )
 
 target_include_directories(
