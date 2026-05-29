@@ -17,6 +17,13 @@ target_sources(
     BiTUI
     PRIVATE
     src/main.cpp
+    src/ScreenBuffer.cpp
+)
+
+target_include_directories(
+    BiTUI
+    PUBLIC
+    include
 )
 
 if(MSVC)
