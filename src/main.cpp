@@ -38,12 +38,18 @@ struct Color
     uint8_t b{};
 };
 
-constexpr auto rgb(uint8_t r, uint8_t g, uint8_t b) -> Color { return Color{ r, g, b }; }
+constexpr auto rgb(uint8_t r, uint8_t g, uint8_t b) -> Color { return Color{ .r = r, .g = g, .b = b }; }
+
+namespace
+{
+    constexpr Color DEFAULT_FOREGROUND_COLOR{ .r = 226, .g = 232, .b = 240 };
+    constexpr Color DEFAULT_BACKGROUND_COLOR{ .r = 10, .g = 14, .b = 22 };
+}
 
 struct Style
 {
-    Color fg{ rgb(226, 232, 240) };
-    Color bg{ rgb(10, 14, 22) };
+    Color fg{ DEFAULT_FOREGROUND_COLOR };
+    Color bg{ DEFAULT_BACKGROUND_COLOR };
     bool bold{};
     bool dim{};
     bool italic{};
@@ -90,13 +96,13 @@ struct Rect
         auto y2{ std::min(bottom(), other.bottom()) };
         return Rect{ .x = x1,
                      .y = y1,
-                     .size = { .width = distance_or_zero(x1, x2), .height = distance_or_zero(y1, y2) } };
+                     .size = Size{ .width = distance_or_zero(x1, x2), .height = distance_or_zero(y1, y2) } };
     }
 
     constexpr auto operator<=>(const Rect&) const = default;
 };
 
-enum class BorderStyle
+enum class BorderStyle : uint8_t
 {
     Single,
     Rounded,
@@ -105,19 +111,26 @@ enum class BorderStyle
 
 namespace
 {
+    constexpr unsigned char UTF8_ONE_BYTE_MASK{ 0b1000'0000U };
+    constexpr unsigned char UTF8_TWO_BYTE_MASK{ 0b1110'0000U };
+    constexpr unsigned char UTF8_TWO_BYTE_PREFIX{ 0b1100'0000U };
+    constexpr unsigned char UTF8_THREE_BYTE_MASK{ 0b1111'0000U };
+    constexpr unsigned char UTF8_THREE_BYTE_PREFIX{ 0b1110'0000U };
+    constexpr unsigned char UTF8_FOUR_BYTE_MASK{ 0b1111'1000U };
+    constexpr unsigned char UTF8_FOUR_BYTE_PREFIX{ 0b1111'0000U };
 
     constexpr auto utf8_glyph_length(unsigned char lead) -> size_t
     {
-        if ((lead & 0b1000'0000U) == 0U) {
+        if ((lead & UTF8_ONE_BYTE_MASK) == 0U) {
             return 1;
         }
-        if ((lead & 0b1110'0000U) == 0b1100'0000U) {
+        if ((lead & UTF8_TWO_BYTE_MASK) == UTF8_TWO_BYTE_PREFIX) {
             return 2;
         }
-        if ((lead & 0b1111'0000U) == 0b1110'0000U) {
+        if ((lead & UTF8_THREE_BYTE_MASK) == UTF8_THREE_BYTE_PREFIX) {
             return 3;
         }
-        if ((lead & 0b1111'1000U) == 0b1111'0000U) {
+        if ((lead & UTF8_FOUR_BYTE_MASK) == UTF8_FOUR_BYTE_PREFIX) {
             return 4;
         }
         return 1;
@@ -137,12 +150,27 @@ namespace
     {
         switch (border) {
             case BorderStyle::Heavy:
-                return { "┏", "┓", "┗", "┛", "━", "┃" };
+                return BorderGlyphs{ .top_left = "┏",
+                                     .top_right = "┓",
+                                     .bottom_left = "┗",
+                                     .bottom_right = "┛",
+                                     .horizontal = "━",
+                                     .vertical = "┃" };
             case BorderStyle::Single:
-                return { "┌", "┐", "└", "┘", "─", "│" };
+                return BorderGlyphs{ .top_left = "┌",
+                                     .top_right = "┐",
+                                     .bottom_left = "└",
+                                     .bottom_right = "┘",
+                                     .horizontal = "─",
+                                     .vertical = "│" };
             case BorderStyle::Rounded:
             default:
-                return { "╭", "╮", "╰", "╯", "─", "│" };
+                return BorderGlyphs{ .top_left = "╭",
+                                     .top_right = "╮",
+                                     .bottom_left = "╰",
+                                     .bottom_right = "╯",
+                                     .horizontal = "─",
+                                     .vertical = "│" };
         }
     }
 
@@ -286,8 +314,10 @@ class ScreenBuffer
 
 auto main() -> int
 {
-    ScreenBuffer screen({ 32, 6 });
-    screen.box({ 0, 0, { 32, 6 } }, BorderStyle::Rounded, Style{});
+    constexpr Size demo_screen_size{ .width = 32, .height = 6 };
+
+    ScreenBuffer screen(demo_screen_size);
+    screen.box(Rect{ .x = 0, .y = 0, .size = demo_screen_size }, BorderStyle::Rounded, Style{});
     screen.text(2, 2, "Cell buffer works", Style{});
 
     auto [width, height] = screen.getSize();
