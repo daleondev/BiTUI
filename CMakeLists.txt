@@ -19,8 +19,19 @@ target_sources(
     src/main.cpp
 )
 
-target_compile_features(
-    BiTUI
-    PUBLIC
-    cxx_std_26
-)
+if(MSVC)
+    target_compile_options(
+        BiTUI 
+        PUBLIC 
+        /std:c++latest 
+        /permissive-
+    )
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_features(
+        BiTUI
+        PUBLIC
+        cxx_std_26
+    )
+endif()
+
+

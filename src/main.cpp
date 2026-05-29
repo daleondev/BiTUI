@@ -10,6 +10,43 @@
 #include <string_view>
 #include <vector>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+namespace bitui::detail
+{
+    [[maybe_unused]]
+    inline const auto CONFIGURED_TERMINAL_HANDLE{ [] {
+        const auto fail{ [] {
+            std::fputs("Error: Failed to configure terminal\n", stderr);
+            std::fflush(stderr);
+            std::exit(EXIT_FAILURE);
+        } };
+
+        HANDLE hOut{ GetStdHandle(STD_OUTPUT_HANDLE) };
+        if (hOut == INVALID_HANDLE_VALUE || !hOut) {
+            fail();
+        }
+
+        SetConsoleOutputCP(CP_UTF8);
+        SetConsoleCP(CP_UTF8);
+
+        DWORD dwMode{};
+        if (GetConsoleMode(hOut, &dwMode) == FALSE) {
+            fail();
+        }
+
+        dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        if (SetConsoleMode(hOut, dwMode) == FALSE) {
+            fail();
+        }
+
+        return hOut;
+    }() };
+}
+#endif
+
 namespace
 {
     constexpr auto uint16_max() -> uint16_t { return std::numeric_limits<uint16_t>::max(); }
