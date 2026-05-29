@@ -6,10 +6,15 @@ auto main() -> int
 
     bitui::ScreenBuffer screen(demo_screen_size);
     screen.box(
-      bitui::Rect{ .x = 0, .y = 0, .size = demo_screen_size }, bitui::BorderStyle::Heavy, bitui::Style{});
+      bitui::Rect{ .x = 0, .y = 0, .size = demo_screen_size }, bitui::BorderStyle::Rounded, bitui::Style{});
     screen.text(2, 2, "Cell buffer works", bitui::Style{});
 
     bitui::Renderer renderer;
+
+    std::cout << renderer.render(screen) << std::flush;
+
+    screen.box(bitui::Rect{ .x = 0, .y = 0, .size = { 4, 4 } }, bitui::BorderStyle::Heavy, bitui::Style{});
+
     std::cout << renderer.render(screen) << std::flush;
 
     return 0;

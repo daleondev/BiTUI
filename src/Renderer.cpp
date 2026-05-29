@@ -14,11 +14,11 @@ namespace bitui
 
             bitui::Style current_style{};
             auto has_style{ false };
-            for (uint16_t y{ 0 }; y < height; ++y) {
-                bitui::ansi::append_move_cursor(output, 0, static_cast<int>(y));
-                for (uint16_t x{ 0 }; x < width; ++x) {
+            for (auto y : std::views::iota(uint16_t{ 0 }, height)) {
+                bitui::ansi::append_move_cursor(output, 0, y);
+                for (auto x : std::views::iota(uint16_t{ 0 }, width)) {
                     const auto& cell{ buffer[x, y] };
-                    if (!has_style || !(cell.style == current_style)) {
+                    if (!has_style || cell.style != current_style) {
                         bitui::ansi::append_style_sequence(output, cell.style);
                         current_style = cell.style;
                         has_style = true;
@@ -41,34 +41,35 @@ namespace bitui
 
         auto [width, height] = buffer.getSize();
         std::string output;
-        output.reserve(static_cast<std::size_t>(width * height));
+        output.reserve(static_cast<size_t>(width * height));
 
         Style current_style{};
         auto has_style{ false };
         auto wrote_cells{ false };
 
-        for (uint16_t y{ 0 }; y < height; ++y) {
+        for (auto y : std::views::iota(uint16_t{ 0 }, height)) {
             uint16_t x{ 0 };
             while (x < width) {
-                while (x < width && buffer[x, y] == m_previous.value()[x, y]) {
-                    ++x;
-                }
+                auto equal{ [&](uint16_t pos) { return buffer[pos, y] == m_previous.value()[pos, y]; } };
 
-                if (x == width) {
+                auto tail{ std::views::iota(x, width) };
+                auto diff_start{ std::ranges::find_if_not(tail, equal) };
+
+                if (diff_start == std::ranges::end(tail)) {
                     break;
                 }
 
-                auto start_x{ x };
-                while (x < width && !(buffer[x, y] == m_previous.value()[x, y])) {
-                    ++x;
-                }
-                auto end_x{ x };
+                auto excerpt{ std::ranges::subrange(diff_start, std::ranges::end(tail)) };
+                auto diff_end(std::ranges::find_if(excerpt, equal));
+
+                auto start_x{ *diff_start };
+                auto end_x{ diff_end == std::ranges::end(excerpt) ? width : *diff_end };
 
                 ansi::append_move_cursor(output, start_x, y);
 
                 for (uint16_t pos{ start_x }; pos < end_x; ++pos) {
                     const auto& cell{ buffer[pos, y] };
-                    if (!has_style || !(cell.style == current_style)) {
+                    if (!has_style || cell.style != current_style) {
                         ansi::append_style_sequence(output, cell.style);
                         current_style = cell.style;
                         has_style = true;
@@ -81,6 +82,7 @@ namespace bitui
         }
 
         if (wrote_cells) {
+            bitui::ansi::append_move_cursor(output, 0, height);
             output += ansi::reset();
         }
         return output;
