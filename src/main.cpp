@@ -1,9 +1,35 @@
 #include <algorithm>
-#include <cmath>
+#include <compare>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
-#include <print>
+#include <limits>
 #include <ranges>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <vector>
+
+namespace
+{
+    constexpr auto uint16_max() -> uint16_t { return std::numeric_limits<uint16_t>::max(); }
+
+    constexpr auto add_saturated(uint16_t value, uint16_t increment) -> uint16_t
+    {
+        if (increment > static_cast<uint16_t>(uint16_max() - value)) {
+            return uint16_max();
+        }
+        return static_cast<uint16_t>(value + increment);
+    }
+
+    constexpr auto distance_or_zero(uint16_t first, uint16_t last) -> uint16_t
+    {
+        if (last <= first) {
+            return 0;
+        }
+        return static_cast<uint16_t>(last - first);
+    }
+}
 
 struct Color
 {
@@ -12,7 +38,7 @@ struct Color
     uint8_t b{};
 };
 
-constexpr Color rgb(uint8_t r, uint8_t g, uint8_t b) { return Color{ r, g, b }; }
+constexpr auto rgb(uint8_t r, uint8_t g, uint8_t b) -> Color { return Color{ r, g, b }; }
 
 struct Style
 {
@@ -35,7 +61,7 @@ struct Size
     uint16_t width{};
     uint16_t height{};
 
-    friend constexpr auto operator<=>(const Size&, const Size&) = default;
+    constexpr auto operator<=>(const Size&) const = default;
 };
 
 struct Rect
@@ -44,9 +70,12 @@ struct Rect
     uint16_t y{};
     Size size{};
 
-    constexpr auto right() const -> uint16_t { return x + size.width; }
-    constexpr auto bottom() const -> uint16_t { return y + size.height; }
-    constexpr auto empty() const -> bool { return size.width <= 0 || size.height <= 0; }
+    constexpr auto right() const -> uint16_t { return add_saturated(x, size.width); }
+    constexpr auto bottom() const -> uint16_t { return add_saturated(y, size.height); }
+    constexpr auto empty() const -> bool
+    {
+        return size.width == 0 || size.height == 0 || right() <= x || bottom() <= y;
+    }
 
     constexpr auto contains(uint16_t px, uint16_t py) const -> bool
     {
@@ -61,11 +90,10 @@ struct Rect
         auto y2{ std::min(bottom(), other.bottom()) };
         return Rect{ .x = x1,
                      .y = y1,
-                     .size = { .width = std::max<uint16_t>(0, x2 - x1),
-                               .height = std::max<uint16_t>(0, y2 - y1) } };
+                     .size = { .width = distance_or_zero(x1, x2), .height = distance_or_zero(y1, y2) } };
     }
 
-    friend constexpr auto operator<=>(const Rect&, const Rect&) = default;
+    constexpr auto operator<=>(const Rect&) const = default;
 };
 
 enum class BorderStyle
@@ -129,11 +157,11 @@ class ScreenBuffer
     {
         m_size = size;
         m_bounds = { .x = 0, .y = 0, .size = size };
-        auto cell_count{ static_cast<std::size_t>(size.width) * static_cast<std::size_t>(size.height) };
+        auto cell_count{ static_cast<size_t>(size.width) * static_cast<size_t>(size.height) };
         m_cells.assign(cell_count, Cell{ .grapheme = " ", .style = clear_style });
     }
 
-    constexpr auto clear(Style clear_style)
+    constexpr auto clear(Style clear_style) -> void
     {
         std::ranges::fill(m_cells, Cell{ .grapheme = " ", .style = clear_style });
     }
@@ -152,11 +180,16 @@ class ScreenBuffer
     constexpr auto text(uint16_t x, uint16_t y, std::string_view text, Style style) -> void
     {
         auto start_x{ x };
+        auto line_saturated{ false };
         for (auto i{ 0UZ }; i < text.size();) {
             auto lead{ static_cast<unsigned char>(text[i]) };
             if (text[i] == '\n') {
+                if (y == uint16_max()) {
+                    break;
+                }
                 ++y;
                 x = start_x;
+                line_saturated = false;
                 ++i;
                 continue;
             }
@@ -164,12 +197,17 @@ class ScreenBuffer
             if (y >= m_size.height) {
                 break;
             }
-            if (y >= 0 && x >= 0 && x < m_size.width) {
+            if (!line_saturated && x < m_size.width) {
                 auto& cell{ m_cells[index(x, y)] };
                 cell.grapheme.assign(text.substr(i, glyph_len));
                 cell.style = style;
             }
-            ++x;
+            if (x == uint16_max()) {
+                line_saturated = true;
+            }
+            else {
+                ++x;
+            }
             i += glyph_len;
         }
     }
@@ -196,28 +234,26 @@ class ScreenBuffer
             return;
         }
 
-        auto glyphs{ glyphs_for(border) };
-        auto left{ rect.x };
-        auto right{ rect.right() - 1 };
-        auto top{ rect.y };
-        auto bottom{ rect.bottom() - 1 };
-
-        auto horizontal_start{ left + 1 };
-        auto horizontal_end{ m_size.width - 1 };
-        if (horizontal_start <= horizontal_end) {
-            for (auto xx{ horizontal_start }; xx <= horizontal_end; ++xx) {
-                put(xx, top, glyphs.horizontal, style);
-                put(xx, bottom, glyphs.horizontal, style);
-            }
+        auto rect_right{ rect.right() };
+        auto rect_bottom{ rect.bottom() };
+        if (distance_or_zero(rect.x, rect_right) < 2 || distance_or_zero(rect.y, rect_bottom) < 2) {
+            return;
         }
 
-        auto vertical_start{ top + 1 };
-        auto vertical_end{ m_size.height - 1 };
-        if (vertical_start <= vertical_end) {
-            for (auto yy{ vertical_start }; yy <= vertical_end; ++yy) {
-                put(left, yy, glyphs.vertical, style);
-                put(right, yy, glyphs.vertical, style);
-            }
+        auto glyphs{ glyphs_for(border) };
+        auto left{ rect.x };
+        auto right{ static_cast<uint16_t>(rect_right - 1) };
+        auto top{ rect.y };
+        auto bottom{ static_cast<uint16_t>(rect_bottom - 1) };
+
+        for (auto xx{ add_saturated(left, 1) }; xx < right; ++xx) {
+            put(xx, top, glyphs.horizontal, style);
+            put(xx, bottom, glyphs.horizontal, style);
+        }
+
+        for (auto yy{ add_saturated(top, 1) }; yy < bottom; ++yy) {
+            put(left, yy, glyphs.vertical, style);
+            put(right, yy, glyphs.vertical, style);
         }
 
         put(left, top, glyphs.top_left, style);
@@ -226,7 +262,7 @@ class ScreenBuffer
         put(right, bottom, glyphs.bottom_right, style);
     }
 
-    auto at(uint16_t x, uint16_t y) const -> const Cell&
+    constexpr auto at(uint16_t x, uint16_t y) const -> const Cell&
     {
         if (!m_bounds.contains(x, y)) {
             throw std::out_of_range("ScreenBuffer::at coordinates out of range");
@@ -234,13 +270,13 @@ class ScreenBuffer
         return m_cells[index(x, y)];
     }
 
-    constexpr auto getSize() -> const Size& { return m_size; }
-    constexpr auto getBounds() -> Rect { return Rect{ .x = 0, .y = 0, .size = m_size }; }
+    constexpr auto getSize() const -> const Size& { return m_size; }
+    constexpr auto getBounds() const -> Rect { return Rect{ .x = 0, .y = 0, .size = m_size }; }
 
   private:
     constexpr auto index(uint16_t x, uint16_t y) const -> size_t
     {
-        return static_cast<std::size_t>(y * m_size.width + x);
+        return (static_cast<size_t>(y) * static_cast<size_t>(m_size.width)) + static_cast<size_t>(x);
     }
 
     Size m_size;
@@ -255,8 +291,8 @@ auto main() -> int
     screen.text(2, 2, "Cell buffer works", Style{});
 
     auto [width, height] = screen.getSize();
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
+    for (uint16_t y = 0; y < height; ++y) {
+        for (uint16_t x = 0; x < width; ++x) {
             std::cout << screen.at(x, y).grapheme;
         }
         std::cout << '\n';
