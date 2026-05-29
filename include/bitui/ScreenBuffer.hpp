@@ -1,3 +1,6 @@
+
+#pragma once
+
 #include <algorithm>
 #include <compare>
 #include <cstddef>
@@ -20,6 +23,8 @@ namespace bitui
     {
         std::string grapheme{ " " };
         Style style{};
+
+        constexpr auto operator<=>(const Cell&) const = default;
     };
 
     using CellGrid = std::mdspan<Cell, std::dextents<std::size_t, 2>, std::layout_right>;

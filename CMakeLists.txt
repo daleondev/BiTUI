@@ -17,8 +17,9 @@ target_sources(
     BiTUI
     PRIVATE
     src/main.cpp
-    src/ScreenBuffer.cpp
     src/ansi.cpp
+    src/ScreenBuffer.cpp
+    src/Renderer.cpp
 )
 
 target_include_directories(

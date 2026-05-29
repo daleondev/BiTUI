@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Color.hpp"
+#include "Renderer.hpp"
 #include "ScreenBuffer.hpp"
 #include "Style.hpp"
 #include "ansi.hpp"
