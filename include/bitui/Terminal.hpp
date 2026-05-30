@@ -27,8 +27,6 @@ namespace bitui
         auto write(std::string_view data) -> void;
         auto flush() -> void;
         auto clearScreen() -> void;
-        auto setCursorVisible(bool visible) -> void;
-        auto useAlternateScreen(bool enabled) -> void;
 
       private:
         std::unique_ptr<detail::TerminalBackend> m_backend{ nullptr };

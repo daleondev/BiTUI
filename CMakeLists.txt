@@ -37,21 +37,7 @@ target_sources(
     src/Terminal.cpp
 )
 
-if(WIN32)
-    target_sources(
-        BiTUI
-        PRIVATE
-        src/terminal/Win32TerminalBackend.cpp
-    )
-elseif(UNIX)
-    target_sources(
-        BiTUI
-        PRIVATE
-        src/terminal/PosixTerminalBackend.cpp
-    )
-else()
-    message(FATAL_ERROR "BiTUI does not have a terminal backend for this platform yet")
-endif()
+include(src/terminal/platform.cmake)
 
 target_include_directories(
     BiTUI

@@ -98,12 +98,12 @@ namespace bitui::detail
             auto restoreConsole() noexcept -> void
             {
                 if (m_originalInputMode.has_value()) {
-                    SetConsoleMode(m_inputHandle, m_originalInputMode.value());
+                    (void)SetConsoleMode(m_inputHandle, m_originalInputMode.value());
                     m_originalInputMode.clear();
                 }
 
                 if (m_originalOutputMode.has_value()) {
-                    SetConsoleMode(m_outputHandle, m_originalOutputMode.value());
+                    (void)SetConsoleMode(m_outputHandle, m_originalOutputMode.value());
                     m_originalOutputMode.clear();
                 }
 
