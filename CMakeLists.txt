@@ -34,6 +34,7 @@ target_sources(
     src/ansi.cpp
     src/ScreenBuffer.cpp
     src/Renderer.cpp
+    src/Terminal.cpp
 )
 
 target_include_directories(

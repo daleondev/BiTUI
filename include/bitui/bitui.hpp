@@ -4,6 +4,7 @@
 #include "Renderer.hpp"
 #include "ScreenBuffer.hpp"
 #include "Style.hpp"
+#include "Terminal.hpp"
 #include "ansi.hpp"
 #include "geometry.hpp"
 

@@ -50,7 +50,7 @@ namespace bitui
         for (auto y : std::views::indices(height)) {
             uint16_t x{ 0 };
             while (x < width) {
-                auto equal{ [&](uint16_t pos) { return buffer[pos, y] == m_previous.value()[pos, y]; } };
+                auto equal{ [&](uint16_t xx) { return buffer[xx, y] == m_previous.value()[xx, y]; } };
 
                 auto tail{ std::views::iota(x, width) };
                 auto diff_start{ std::ranges::find_if_not(tail, equal) };
