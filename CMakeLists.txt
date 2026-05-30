@@ -32,6 +32,7 @@ target_sources(
     PRIVATE
     src/main.cpp
     src/ansi.cpp
+    src/Terminal.cpp
     src/ScreenBuffer.cpp
     src/Renderer.cpp
 )
