@@ -11,7 +11,8 @@ namespace bitui::ansi
         template<std::integral IntType>
         auto append_num(std::string& output, IntType value) -> void
         {
-            std::array<char, 16> buffer{};
+            constexpr size_t buffer_size{ std::numeric_limits<IntType>::digits10 + 1 };
+            std::array<char, buffer_size> buffer{};
             auto result{ std::to_chars(buffer.data(), buffer.data() + buffer.size(), value) };
             output.append(buffer.data(), result.ptr);
         }
@@ -21,10 +22,11 @@ namespace bitui::ansi
 
     auto clear_screen() -> std::string { return "\x1b[2J"; }
 
-    auto move_cursor(int x, int y) -> std::string
+    auto move_cursor(uint16_t x, uint16_t y) -> std::string
     {
         std::string output;
-        output.reserve(16);
+        constexpr auto reserved_size{ (std::numeric_limits<uint16_t>::digits10 * 2UZ) + 8UZ };
+        output.reserve(reserved_size);
         append_move_cursor(output, x, y);
         return output;
     }
@@ -40,7 +42,8 @@ namespace bitui::ansi
     auto style_sequence(const Style& style) -> std::string
     {
         std::string output;
-        output.reserve(64);
+        constexpr auto reserved_size{ 64UZ };
+        output.reserve(reserved_size);
         append_style_sequence(output, style);
         return output;
     }

@@ -13,7 +13,9 @@ auto main() -> int
 
     std::cout << renderer.render(screen) << std::flush;
 
-    screen.box(bitui::Rect{ .x = 0, .y = 0, .size = { 4, 4 } }, bitui::BorderStyle::Heavy, bitui::Style{});
+    screen.box(bitui::Rect{ .x = 0, .y = 0, .size = bitui::Size{ .width = 4, .height = 4 } },
+               bitui::BorderStyle::Heavy,
+               bitui::Style{});
 
     std::cout << renderer.render(screen) << std::flush;
 

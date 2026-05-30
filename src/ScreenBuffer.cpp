@@ -69,9 +69,10 @@ namespace bitui
         if (clipped.empty() || glyph.empty()) {
             return;
         }
-        for (auto yy{ clipped.y }; yy < clipped.bottom(); ++yy) {
+        for (auto yy : std::views::iota(clipped.y, clipped.bottom())) {
             auto* row{ &grid()[yy, clipped.x] };
-            for (auto xx{ clipped.x }; xx < clipped.right(); ++xx) {
+            for (auto xx : std::views::iota(clipped.x, clipped.right())) {
+                (void)xx;
                 row->grapheme = std::string(glyph);
                 row->style = style;
                 ++row;
@@ -98,12 +99,12 @@ namespace bitui
         auto top{ rect.y };
         auto bottom{ static_cast<uint16_t>(rect_bottom - 1) };
 
-        for (auto xx{ detail::add_saturated(left, 1) }; xx < right; ++xx) {
+        for (auto xx : std::views::iota(detail::add_saturated(left, 1), right)) {
             put(xx, top, glyphs.horizontal, style);
             put(xx, bottom, glyphs.horizontal, style);
         }
 
-        for (auto yy{ detail::add_saturated(top, 1) }; yy < bottom; ++yy) {
+        for (auto yy : std::views::iota(detail::add_saturated(top, 1), bottom)) {
             put(left, yy, glyphs.vertical, style);
             put(right, yy, glyphs.vertical, style);
         }

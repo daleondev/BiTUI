@@ -10,13 +10,13 @@ namespace bitui
         {
             std::string output;
             auto [width, height] = buffer.getSize();
-            output.reserve(static_cast<std::size_t>(width * height * 8));
+            output.reserve(static_cast<size_t>(width) * static_cast<size_t>(height));
 
             bitui::Style current_style{};
             auto has_style{ false };
-            for (auto y : std::views::iota(uint16_t{ 0 }, height)) {
+            for (auto y : std::views::indices(height)) {
                 bitui::ansi::append_move_cursor(output, 0, y);
-                for (auto x : std::views::iota(uint16_t{ 0 }, width)) {
+                for (auto x : std::views::indices(width)) {
                     const auto& cell{ buffer[x, y] };
                     if (!has_style || cell.style != current_style) {
                         bitui::ansi::append_style_sequence(output, cell.style);
@@ -41,13 +41,13 @@ namespace bitui
 
         auto [width, height] = buffer.getSize();
         std::string output;
-        output.reserve(static_cast<size_t>(width * height));
+        output.reserve(static_cast<size_t>(width) * static_cast<size_t>(height));
 
         Style current_style{};
         auto has_style{ false };
         auto wrote_cells{ false };
 
-        for (auto y : std::views::iota(uint16_t{ 0 }, height)) {
+        for (auto y : std::views::indices(height)) {
             uint16_t x{ 0 };
             while (x < width) {
                 auto equal{ [&](uint16_t pos) { return buffer[pos, y] == m_previous.value()[pos, y]; } };
