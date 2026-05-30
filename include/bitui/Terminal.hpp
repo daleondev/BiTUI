@@ -3,10 +3,16 @@
 #include "geometry.hpp"
 
 #include <memory>
+#include <string>
 #include <string_view>
 
 namespace bitui
 {
+    namespace detail
+    {
+        class TerminalBackend;
+    }
+
     class Terminal
     {
       public:
@@ -25,9 +31,7 @@ namespace bitui
         auto useAlternateScreen(bool enabled) -> void;
 
       private:
-        struct State;
-
-        std::unique_ptr<State> m_state{ nullptr };
+        std::unique_ptr<detail::TerminalBackend> m_backend{ nullptr };
         std::string m_pendingInput{};
     };
 }

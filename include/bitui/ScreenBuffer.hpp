@@ -27,8 +27,8 @@ namespace bitui
         constexpr auto operator<=>(const Cell&) const = default;
     };
 
-    using CellGrid = std::mdspan<Cell, std::dextents<std::size_t, 2>, std::layout_right>;
-    using ConstCellGrid = std::mdspan<const Cell, std::dextents<std::size_t, 2>, std::layout_right>;
+    using CellGrid = std::mdspan<Cell, std::dextents<size_t, 2>, std::layout_right>;
+    using ConstCellGrid = std::mdspan<const Cell, std::dextents<size_t, 2>, std::layout_right>;
 
     class ScreenBuffer
     {
