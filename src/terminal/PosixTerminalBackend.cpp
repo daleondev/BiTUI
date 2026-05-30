@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -46,6 +47,15 @@ namespace bitui::detail
                 if (std::fflush(stdout) != 0) {
                     throw std::runtime_error("Failed to flush terminal output");
                 }
+            }
+
+            auto getSize() const -> Size override
+            {
+                winsize ws{};
+                if (::ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 0 && ws.ws_row > 0) {
+                    return Size{ .width = ws.ws_col, .height = ws.ws_row };
+                }
+                return Size{};
             }
 
           private:

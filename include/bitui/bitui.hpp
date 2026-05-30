@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Application.hpp"
 #include "Color.hpp"
 #include "Renderer.hpp"
 #include "ScreenBuffer.hpp"

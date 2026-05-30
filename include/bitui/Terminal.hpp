@@ -28,6 +28,8 @@ namespace bitui
         auto flush() -> void;
         auto clearScreen() -> void;
 
+        auto getSize() const -> Size;
+
       private:
         std::unique_ptr<detail::TerminalBackend> m_backend{ nullptr };
         std::string m_pendingInput{};

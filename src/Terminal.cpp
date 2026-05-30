@@ -39,4 +39,6 @@ namespace bitui
         ansi::append_move_cursor(clear_sequence, 0, 0);
         write(clear_sequence);
     }
+
+    auto Terminal::getSize() const -> Size { return m_backend->getSize(); }
 }

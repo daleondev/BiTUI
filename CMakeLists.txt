@@ -35,6 +35,7 @@ target_sources(
     src/ScreenBuffer.cpp
     src/Renderer.cpp
     src/Terminal.cpp
+    src/Application.cpp
 )
 
 include(src/terminal/platform.cmake)
